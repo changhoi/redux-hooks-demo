@@ -107,7 +107,71 @@ hooks 내용은 사실상 이 정도에서 끝난다. `connect`를 대체하지 
 
 ## Hooks로 기존 데모 앱 바꾸기
 
+우선 리덕스를 붙이기 전 상태처럼 `src/screens/PostScreen/index.tsx`를 간단하게 바꿨다.
+
+```tsx
+export default PostScreen;
+```
+
+다음 간단하게 `useDispatch`와 `useSelector`를 사용해서 리덕스 스토어에서 값을 가져와 봤다.
+
+```tsx
+import React, { useEffect } from "react";
+import Presenter from "./Presenter";
+import { useDispatch, useSelector } from "react-redux";
+import { getPost } from "../../redux/modules/post/sagaReducer";
+
+const PostScreen: React.FC = props => {
+  const dispatch = useDispatch();
+  const postList = useSelector<any>(
+    store => store.post.postList,
+    (left, right): any =>
+      (left as Array<any>).every((value, index) => {
+        const sameTitle = value.title === (right as Array<any>)[index].title;
+        const sameBody = value.body === (right as Array<any>)[index].body;
+        return sameTitle && sameBody;
+      })
+  ) as Array<any>;
+
+  const fetchPost = (): any => dispatch(getPost());
+
+  useEffect(() => {
+    // 렌더링이 얼마나 되는지 확인용
+    console.log("rendering!!!!");
+  });
+
+  const onClick = () => {
+    fetchPost();
+  };
+
+  return <Presenter onClick={onClick} postList={postList} />;
+};
+
+export default PostScreen;
+```
+
+`shallowEqual`을 사용해도 내부적으로 한 번 더 객체 형태라 같은 값을 가져와도 랜더링이 한 번 더 되는 것 같아서, 직접 비교하는 함수를 구성해봤다.
+
+```tsx
+const postList = useSelector<any>(
+  store => store.post.postList,
+  (left, right): any =>
+    (left as Array<any>).every((value, index) => {
+      const sameTitle = value.title === (right as Array<any>)[index].title;
+      const sameBody = value.body === (right as Array<any>)[index].body;
+      return sameTitle && sameBody;
+    })
+) as Array<any>;
+```
+
+복잡하기는 한데, `equalityFn`은 이전 상태를 `left`에, 다음 상태를 `right`로 둔다 (왜 타입 이름을 이렇게 했을까, prevState, nextState로 했으면 좋겠다 물론 그냥 내가 적을 때 그렇게 하면 되지만, 일단 데모에서는 타입에서 제공하는 이름으로 적었다). 넘어오는 값이 객체 형태로 깊다면, 이런식으로 직접 비교하는 함수를 작성해줘야 랜더링이 두 번 안 된다.
+
+![](./render.png)
+
+## 후기
+
+Hooks 형태로 작성한다는 점 자체는 상당히 매력적인 것 같다. 그리고 비교 함수를 직접 넣을 수 있다는 점, `Container`에 로직을 넣는 방식이라는 점, `props interface`에 대해서 고민하지 않아도 된다는 점, (데모에서는 항상 any를 애용하지만, 실제 타입스크립트 프로젝트에서는 타입에 대해서 자주 고민하게 된다.) 등은 매력적인 것 같다. 다만 hooks 형태로 하게 되면, `Container`가 지나치게 복잡해지진 않을까 싶기도 하고, 협업할 때 특별한 패턴이나 아키텍처가 아니라서, 리덕스와 관련된 디버깅을 할 때 조금 더 시간 소비가 될 수 있지 않을까 싶기도 하다.
+
 ## Reference
 
 - https://react-redux.js.org/api/hooks
-- https://velog.io/@velopert/react-redux-hooks

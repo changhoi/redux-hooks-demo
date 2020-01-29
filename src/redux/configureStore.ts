@@ -1,12 +1,12 @@
 import { createStore, applyMiddleware, combineReducers } from "redux";
 import logger from "redux-logger";
 import thunk from "redux-thunk";
-import postThunk from "./modules/post/thunkReducer";
+//import postThunk from "./modules/post/thunkReducer";
 import createSagaMiddleware from "redux-saga";
 import postSaga, { rootSaga } from "./modules/post/sagaReducer";
 const sagaMiddleware = createSagaMiddleware();
 
-const rootReducer = combineReducers({ post: postThunk });
+const rootReducer = combineReducers({ post: postSaga });
 
 export default createStore(
   rootReducer,
